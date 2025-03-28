@@ -144,7 +144,7 @@ app.post("/create-plan", async (req, res) => {
         const product = await stripe.products.create({ name });
         const priceObj = await stripe.prices.create({
             unit_amount: price * 100,
-            currency: "usd",
+            currency: "eur",
             product: product.id,
         });
 
@@ -153,6 +153,45 @@ app.post("/create-plan", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+
+
+// 1️⃣ Create a Payment Intent (Charge User)
+app.post("/create-payment-intent", async (req, res) => {
+  const priceId = req.body.priceId
+
+  console.log("priceID", priceId)
+  
+  try {
+
+      // Fetch price from Stripe
+      const price = await stripe.prices.retrieve(priceId);
+      const amount = price.unit_amount; // Get price amount in cents
+      console.log("price", price)
+
+
+      // 2️⃣ Fetch product details from Stripe to get the name
+      const product = await stripe.products.retrieve(price.product);
+      const productName = product.name;
+
+      console.log("product", product)
+
+
+      const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "eur",
+          payment_method_types: ["card"],
+          metadata: { productName } // ✅ Store product name inside Stripe
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.log(error)
+      res.status(500).json({ error: error.message });
+  }
+});
+
 
 // 3️⃣ Create Checkout Session
 app.post("/create-checkout-session", async (req, res) => {
@@ -180,7 +219,7 @@ app.post("/pay-coaches", async (req, res) => {
             if (coach.earnings > 0) {
                 await stripe.transfers.create({
                     amount: Math.round(coach.earnings * 0.8 * 100), // 80% payout
-                    currency: "usd",
+                    currency: "eur",
                     destination: coach.accountId,
                 });
 
