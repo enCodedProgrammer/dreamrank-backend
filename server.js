@@ -181,7 +181,10 @@ app.post("/create-payment-intent", async (req, res) => {
       const paymentIntent = await stripe.paymentIntents.create({
           amount: amount,
           currency: "eur",
-          payment_method_types: ["card"],
+          //payment_method_types: ["card"],
+          automatic_payment_methods: {
+            enabled: true,
+          },
           metadata: { productName } // ✅ Store product name inside Stripe
       });
 
