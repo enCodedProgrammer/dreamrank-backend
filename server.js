@@ -95,7 +95,24 @@ app.post(
           },
         });
 
-        console.log("✅ Invoice created:", invoice.id);
+    //     const xanoUrl = "https://xano.io/api:YOUR_API_KEY/users"; // replace with your endpoint
+
+    // // Make POST request to Xano
+    // const response = await axios.post(xanoUrl, {
+    //   invoiceId: invoice.id,
+    //   invoicePdf: invoice.invoice_pdf,
+    //   hostedInvoiceUrl: invoice.hosted_invoice_url,
+    //   }, {
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": "Bearer YOUR_XANO_API_KEY" // if your API requires authentication
+    //   }
+    // });
+
+
+
+
+        console.log("✅ Invoice created:", invoice);
 
 
         // 3️⃣ Finalize immediately (🔥 THIS sends the email)
