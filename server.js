@@ -89,13 +89,21 @@ app.post(
         // 5️⃣ Create & finalize invoice
         const invoice = await stripe.invoices.create({
           customer: paymentIntent.customer,
-          auto_advance: true,
+          auto_advance: false,
           metadata: {
             payment_intent: paymentIntent.id, // 🔥 idempotency marker
           },
         });
 
         console.log("✅ Invoice created:", invoice.id);
+
+
+        // 3️⃣ Finalize immediately (🔥 THIS sends the email)
+        await stripe.invoices.finalizeInvoice(invoice.id);
+
+        console.log("Invoice finalized & email sent:", invoice.id);
+
+
       } catch (err) {
         console.error("❌ Invoice creation failed:", err);
       }
