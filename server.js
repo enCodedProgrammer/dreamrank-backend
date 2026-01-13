@@ -38,35 +38,73 @@ app.post(
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    let event;
 
+    // 1️⃣ Verify webhook signature
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error("❌ Webhook signature verification failed:", err.message);
+      return res.status(400).send("Webhook Error");
+    }
+
+    // 2️⃣ Handle successful payment
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object;
 
-      // 1️⃣ Create invoice line item
-      await stripe.invoiceItems.create({
-        customer: paymentIntent.customer,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        description: paymentIntent.metadata.productName,
-      });
+      // 🔴 Safety check
+      if (!paymentIntent.customer) {
+        console.error("❌ No customer on PaymentIntent:", paymentIntent.id);
+        return res.json({ received: true });
+      }
 
-      // 2️⃣ Create & finalize invoice
-      const invoice = await stripe.invoices.create({
-        customer: paymentIntent.customer,
-        auto_advance: true, // 🔥 auto finalize
-      });
+      try {
+        // 3️⃣ Prevent duplicate invoices (idempotency)
+        const existingInvoices = await stripe.invoices.list({
+          customer: paymentIntent.customer,
+          limit: 10,
+        });
 
-      console.log("Invoice created:", invoice.id);
+        const alreadyInvoiced = existingInvoices.data.some(inv =>
+          inv.metadata?.payment_intent === paymentIntent.id
+        );
+
+        if (alreadyInvoiced) {
+          console.log("⚠️ Invoice already exists for:", paymentIntent.id);
+          return res.json({ received: true });
+        }
+
+        // 4️⃣ Create invoice item
+        await stripe.invoiceItems.create({
+          customer: paymentIntent.customer,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          description: paymentIntent.metadata.productName,
+        });
+
+        // 5️⃣ Create & finalize invoice
+        const invoice = await stripe.invoices.create({
+          customer: paymentIntent.customer,
+          auto_advance: true,
+          metadata: {
+            payment_intent: paymentIntent.id, // 🔥 idempotency marker
+          },
+        });
+
+        console.log("✅ Invoice created:", invoice.id);
+      } catch (err) {
+        console.error("❌ Invoice creation failed:", err);
+      }
     }
 
     res.json({ received: true });
   }
 );
+
 
 
 
