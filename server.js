@@ -29,36 +29,6 @@ app.use(Cors({}))
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 //app.use(express.static(process.env.STATIC_DIR));
-app.use(
-  express.json({
-    // We need the raw body to verify webhook signatures.
-    // Let's compute it only when hitting the Stripe webhook endpoint.
-    verify: function (req, res, buf) {
-      if (req.originalUrl.startsWith('/webhook')) {
-        req.rawBody = buf.toString();
-      }
-    },
-  })
-);
-
-
-
-
-app.get('/a', (req, res) => {
-res.send({drug: "drug"})
-})
-
-
-
-
-
-app.get('/config', (req, res) => {
-  res.send({
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-  });
-});
-
-
 
 
 
@@ -98,6 +68,38 @@ app.post(
   }
 );
 
+
+
+
+
+app.use(
+  express.json({
+    // We need the raw body to verify webhook signatures.
+    // Let's compute it only when hitting the Stripe webhook endpoint.
+    verify: function (req, res, buf) {
+      if (req.originalUrl.startsWith('/webhook')) {
+        req.rawBody = buf.toString();
+      }
+    },
+  })
+);
+
+
+
+
+app.get('/a', (req, res) => {
+res.send({drug: "drug"})
+})
+
+
+
+
+
+app.get('/config', (req, res) => {
+  res.send({
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+  });
+});
 
 
 
