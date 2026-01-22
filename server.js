@@ -272,16 +272,33 @@ app.post("/create-stripe-account", async (req, res) => {
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
     try {
-        const { accountId, name, price } = req.body;
+        const { accountId, name, price } = req.body; // price is in Euros (e.g., 100)
 
+        // 1. Convert to cents to avoid floating point issues
+        const baseCents = price * 100;
+
+        // 2. Calculate fees
+        const platformFee = baseCents * 0.05;          // 5%
+        const processingFee = (baseCents * 0.015) + 25; // 1.5% + 25 cents
+
+        // 3. Calculate total and round to nearest integer
+        const totalAmountCents = Math.round(baseCents + platformFee + processingFee);
+
+        // Create the Product
         const product = await stripe.products.create({ name });
+
+        // Create the Price with the bundled fees
         const priceObj = await stripe.prices.create({
-            unit_amount: price * 100,
+            unit_amount: totalAmountCents,
             currency: "eur",
             product: product.id,
+            // If this is a subscription, add: recurring: { interval: 'month' },
         });
 
-        res.json({ priceId: priceObj.id });
+        res.json({ 
+            priceId: priceObj.id, 
+            totalCharged: totalAmountCents / 100 // Returns total in EUR for your UI
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
