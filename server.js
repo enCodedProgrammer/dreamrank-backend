@@ -284,7 +284,7 @@ app.post("/create-plan", async (req, res) => {
         // 3. Calculate total and round to nearest integer
         const totalAmountCents = Math.round(baseCents + platformFee + processingFee);
 
-        // Create the Product
+        // CCreate the Product
         const product = await stripe.products.create({ name });
 
         // Create the Price with the bundled fees
