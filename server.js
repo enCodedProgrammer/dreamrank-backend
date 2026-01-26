@@ -278,8 +278,8 @@ app.post("/create-plan", async (req, res) => {
         const baseCents = price * 100;
 
         // 2. Calculate fees
-        const platformFee = baseCents * 0.05;          // 5%
-        const processingFee = (baseCents * 0.015) + 25; // 1.5% + 25 cents
+        const platformFee = baseCents * 0.05;          // 5% Dreamranks customers fee
+        const processingFee = (platformFee * 0.015) + 25; // 1.5% + 25 cents stripe fee
 
         // 3. Calculate total and round to nearest integer
         const totalAmountCents = Math.round(baseCents + platformFee + processingFee);
