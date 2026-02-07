@@ -337,6 +337,13 @@ app.post("/create-payment-intent", async (req, res) => {
 
 
 
+      const paymentMethods = await stripe.paymentMethods.list({
+  customer: customer.id,
+  type: 'paypal',
+});
+
+
+
       const paymentIntent = await stripe.paymentIntents.create({
           amount: amount,
           currency: "eur",
@@ -345,9 +352,7 @@ app.post("/create-payment-intent", async (req, res) => {
           //automatic_payment_methods: {
           //  enabled: true,
           //}
-            payment_method_data: {
-            type: 'paypal',
-          },
+          payment_method: paymentMethods.id,
           metadata: { productName } // ✅ Store product name inside Stripe
       });
 
