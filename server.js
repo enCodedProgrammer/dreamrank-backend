@@ -309,6 +309,7 @@ app.post("/create-plan", async (req, res) => {
 // 1️⃣ Create a Payment Intent (Charge User)
 app.post("/create-payment-intent", async (req, res) => {
   const priceId = req.body.priceId
+  const paymentOption = req.body.paymentOption
 
   console.log("priceID", priceId)
   
@@ -339,10 +340,10 @@ app.post("/create-payment-intent", async (req, res) => {
           amount: amount,
           currency: "eur",
           customer: customer.id,
-          //payment_method_types: ["card"],
-          automatic_payment_methods: {
-            enabled: true,
-          },
+          payment_method_types: [paymentOption],
+          //automatic_payment_methods: {
+          //  enabled: true,
+          //},
           metadata: { productName } // ✅ Store product name inside Stripe
       });
 
