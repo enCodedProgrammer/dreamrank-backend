@@ -313,7 +313,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
   console.log("priceID", priceId)
   
-  if (paymentOption == "pal") {
+  if (paymentOption == "paypal") {
   try {
 
       // Fetch price from Stripe
@@ -341,9 +341,12 @@ app.post("/create-payment-intent", async (req, res) => {
           amount: amount,
           currency: "eur",
           customer: customer.id,
-          //payment_method_types: [paymentOption],
-          automatic_payment_methods: {
-            enabled: true,
+          payment_method_types: [paymentOption],
+          //automatic_payment_methods: {
+          //  enabled: true,
+          //}
+            payment_method_data: {
+            type: 'paypal',
           },
           metadata: { productName } // ✅ Store product name inside Stripe
       });
