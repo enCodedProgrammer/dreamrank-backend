@@ -313,7 +313,50 @@ app.post("/create-payment-intent", async (req, res) => {
 
   console.log("priceID", priceId)
   
+  if (paymentOption == "paypal") {
   try {
+
+      // Fetch price from Stripe
+      const price = await stripe.prices.retrieve(priceId);
+      const amount = price.unit_amount; // Get price amount in cents
+      console.log("price", price)
+
+
+      // 2️⃣ Fetch product details from Stripe to get the name
+      const product = await stripe.products.retrieve(price.product);
+      const productName = product.name;
+
+      console.log("product", product)
+
+
+
+      const customer = await stripe.customers.create({
+        email: req.body.email,
+        name: req.body.name,
+      });
+
+
+
+      const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "eur",
+          customer: customer.id,
+          //payment_method_types: [paymentOption],
+          automatic_payment_methods: {
+            enabled: true,
+          },
+          metadata: { productName } // ✅ Store product name inside Stripe
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.log(error)
+      res.status(500).json({ error: error.message });
+  } 
+
+} else {
+
+    try {
 
       // Fetch price from Stripe
       const price = await stripe.prices.retrieve(priceId);
@@ -352,6 +395,8 @@ app.post("/create-payment-intent", async (req, res) => {
     console.log(error)
       res.status(500).json({ error: error.message });
   }
+
+}
 });
 
 
