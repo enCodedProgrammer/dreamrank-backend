@@ -313,7 +313,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
   console.log("priceID", priceId)
   
-  if (paymentOption == "paypal") {
+  if (paymentOption == "pal") {
   try {
 
       // Fetch price from Stripe
