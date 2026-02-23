@@ -246,9 +246,6 @@ app.get('/config', (req, res) => {
 
 
 
-
-
-
 let coaches = []; // Store coach details in memory
 
 // 1️⃣ Create Stripe Connect Account
