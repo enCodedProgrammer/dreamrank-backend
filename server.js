@@ -103,9 +103,9 @@ app.post(
         const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1}`; // replace with your endpoint
 
     // Make POST request to Xano
-    const response = await axios.post(xanoUrl, {
+    const response = await axios.put(xanoUrl, {
       userId: paymentIntent.metadata.userId,
-      invoiceId: invoice.id,
+      //invoiceId: invoice.id,
       invoicePdf: invoice.invoice_pdf,
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       }, {
