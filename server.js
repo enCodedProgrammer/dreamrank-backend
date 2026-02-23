@@ -95,19 +95,24 @@ app.post(
           },
         });
 
-    //     const xanoUrl = "https://xano.io/api:YOUR_API_KEY/users"; // replace with your endpoint
 
-    // // Make POST request to Xano
-    // const response = await axios.post(xanoUrl, {
-    //   invoiceId: invoice.id,
-    //   invoicePdf: invoice.invoice_pdf,
-    //   hostedInvoiceUrl: invoice.hosted_invoice_url,
-    //   }, {
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     "Authorization": "Bearer YOUR_XANO_API_KEY" // if your API requires authentication
-    //   }
-    // });
+
+
+
+
+        const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1}`; // replace with your endpoint
+
+    // Make POST request to Xano
+    const response = await axios.post(xanoUrl, {
+      userId: paymentIntent.metadata.userId,
+      invoiceId: invoice.id,
+      invoicePdf: invoice.invoice_pdf,
+      hostedInvoiceUrl: invoice.hosted_invoice_url,
+      }, {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
 
 
 
@@ -117,6 +122,8 @@ app.post(
 
         // 3️⃣ Finalize immediately (🔥 THIS sends the email)
         await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(invoice.id);
+
 
         console.log("Invoice finalized & email sent:", invoice.id);
 
@@ -163,79 +170,6 @@ app.get('/config', (req, res) => {
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
   });
 });
-
-
-
-
-
-
-
-
-// // Expose a endpoint as a webhook handler for asynchronous events.
-// // Configure your webhook in the stripe developer dashboard
-// // https://dashboard.stripe.com/test/webhooks
-// app.post('/webhook', async (req, res) => {
-//   let data, eventType;
-
-//   // Check if webhook signing is configured.
-//   if (process.env.STRIPE_WEBHOOK_SECRET) {
-//     // Retrieve the event by verifying the signature using the raw body and secret.
-//     let event;
-//     let signature = req.headers['stripe-signature'];
-//     try {
-//       event = stripe.webhooks.constructEvent(
-//         req.rawBody,
-//         signature,
-//         process.env.STRIPE_WEBHOOK_SECRET
-//       );
-//     } catch (err) {
-//       console.log(`⚠️  Webhook signature verification failed.`);
-//       return res.sendStatus(400);
-//     }
-//     data = event.data;
-//     eventType = event.type;
-//   } else {
-//     // Webhook signing is recommended, but if the secret is not configured in `config.js`,
-//     // we can retrieve the event data directly from the request body....
-//     data = req.body.data;
-//     eventType = req.body.type;
-//   }
-
-//   if (eventType === 'payment_intent.succeeded') {
-//     // Funds have been captured
-//     // Fulfill any orders, e-mail receipts, etcc
-//     // To cancel the payment after capture you will need to issue a Refund (https://stripe.com/docs/api/refunds)
-
-//       const paymentIntent = event.data.object;
-
-//       // 1️⃣ Create invoice line item
-//       await stripe.invoiceItems.create({
-//         customer: paymentIntent.customer,
-//         amount: paymentIntent.amount,
-//         currency: paymentIntent.currency,
-//         description: paymentIntent.metadata.productName,
-//       });
-
-//       // 2️⃣ Create & finalize invoice
-//       const invoice = await stripe.invoices.create({
-//         customer: paymentIntent.customer,
-//         auto_advance: true, // 🔥 auto finalize
-//       });
-
-//       console.log("Invoice created:", invoice.id);
-
-//     res.json({ received: true });
-
-
-
-
-//     console.log('💰 Payment captured!');
-//   } else if (eventType === 'payment_intent.payment_failed') {
-//     console.log('❌ Payment failed.');
-//   }
-//   res.sendStatus(200);
-// });
-
 
 
 
@@ -307,6 +241,7 @@ app.post("/create-plan", async (req, res) => {
 app.post("/create-payment-intent", async (req, res) => {
   const priceId = req.body.priceId
   const paymentOption = req.body.paymentOption
+  const userId = req.body.userId
 
   console.log("priceID", priceId)
   
@@ -346,6 +281,9 @@ app.post("/create-payment-intent", async (req, res) => {
           currency: "eur",
           customer: customer.id,
           payment_method_types: [paymentOption],
+          metadata: {
+            userId: userId, 
+          },
           //automatic_payment_methods: {
           //  enabled: true,
           //}
@@ -389,6 +327,9 @@ app.post("/create-payment-intent", async (req, res) => {
           currency: "eur",
           customer: customer.id,
           payment_method_types: [paymentOption],
+          metadata: {
+            userId: userId
+          },
           //automatic_payment_methods: {
           //  enabled: true,
           //},
