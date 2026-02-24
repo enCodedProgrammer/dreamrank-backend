@@ -196,7 +196,13 @@ app.post("/create-stripe-account", async (req, res) => {
 
         res.json({ accountId: account.id });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      console.error("Stripe Error:", error);
+      res.status(500).json({ 
+        message: error.message,
+        type: error.type,
+        raw: error.raw
+    });
+        //res.status(500).json({ error: error.message });
     }
 });
 
