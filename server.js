@@ -103,9 +103,9 @@ app.post(
         const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1}`; // replace with your endpoint
 
     // Make POST request to Xano
-    const response = await axios.post(xanoUrl, {
+    const response = await axios.put(xanoUrl, {
       userId: paymentIntent.metadata.userId,
-      invoiceId: invoice.id,
+      //invoiceId: invoice.id,
       invoicePdf: invoice.invoice_pdf,
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       }, {
@@ -196,7 +196,13 @@ app.post("/create-stripe-account", async (req, res) => {
 
         res.json({ accountId: account.id });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      console.error("Stripe Error:", error);
+      res.status(500).json({ 
+        message: error.message,
+        type: error.type,
+        raw: error.raw
+    });
+        //res.status(500).json({ error: error.message });
     }
 });
 
