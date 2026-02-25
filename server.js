@@ -89,6 +89,8 @@ app.post(
         // 5️⃣ Create & finalize invoice
         const invoice = await stripe.invoices.create({
           customer: paymentIntent.customer,
+          collection_method: 'send_invoice', // 🔥 Required to use sendInvoice()
+          days_until_due: 30,
           auto_advance: false,
           metadata: {
             payment_intent: paymentIntent.id, // 🔥 idempotency marker
