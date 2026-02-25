@@ -98,9 +98,20 @@ app.post(
 
 
 
+                console.log("✅ Invoice created:", invoice);
 
 
-        const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1}`; // replace with your endpoint
+        // 3️⃣ Finalize immediately (🔥 THIS sends the email)
+        await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(invoice.id);
+
+
+        console.log("Invoice finalized & email sent:", invoice.id);
+
+
+
+
+        const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1`; // replace with your endpoint
 
     // Make POST request to Xano
     const response = await axios.put(xanoUrl, {
@@ -115,17 +126,11 @@ app.post(
     });
 
 
+    console.log("xnao invoice sent", response)
 
 
-        console.log("✅ Invoice created:", invoice);
 
 
-        // 3️⃣ Finalize immediately (🔥 THIS sends the email)
-        await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(invoice.id);
-
-
-        console.log("Invoice finalized & email sent:", invoice.id);
 
 
       } catch (err) {
