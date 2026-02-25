@@ -58,7 +58,7 @@ app.post(
 
       // 🔴 Safety check
       if (!paymentIntent.customer) {
-        console.error("❌ No customer on PaymentIntent:", paymentIntent.id);
+        console.error("❌ No customer on PaymentIntent:", paymentIntent.id, paymentIntent);
         return res.json({ received: true });
       }
 
@@ -118,7 +118,6 @@ app.post(
     // Make POST request to Xano
     const response = await axios.put(xanoUrl, {
       userId: paymentIntent.metadata.userId,
-      //invoiceId: invoice.id,
       invoicePdf: invoice.invoice_pdf,
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       }, {
