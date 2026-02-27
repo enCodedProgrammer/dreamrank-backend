@@ -63,52 +63,59 @@ app.post(
       }
 
       try {
-        // 3️⃣ Prevent duplicate invoices (idempotency)
-        const existingInvoices = await stripe.invoices.list({
-          customer: paymentIntent.customer,
-          limit: 10,
-        });
-
-        const alreadyInvoiced = existingInvoices.data.some(inv =>
-          inv.metadata?.payment_intent === paymentIntent.id
-        );
-
-        if (alreadyInvoiced) {
-          console.log("⚠️ Invoice already exists for:", paymentIntent.id);
-          return res.json({ received: true });
-        }
-
-        // 4️⃣ Create invoice item
-        await stripe.invoiceItems.create({
-          customer: paymentIntent.customer,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-          description: paymentIntent.metadata.productName,
-        });
-
-        // 5️⃣ Create & finalize invoice
-        const invoice = await stripe.invoices.create({
-          customer: paymentIntent.customer,
-          collection_method: 'send_invoice', // 🔥 Required to use sendInvoice()
-          days_until_due: 30,
-          auto_advance: false,
-          metadata: {
-            payment_intent: paymentIntent.id, // 🔥 idempotency marker
-          },
-        });
 
 
+          const charge = await stripe.charges.retrieve(
+              paymentIntent.latest_charge
+            );
+
+            console.log(charge.receipt_url);
+        // // 3️⃣ Prevent duplicate invoices (idempotency)
+        // const existingInvoices = await stripe.invoices.list({
+        //   customer: paymentIntent.customer,
+        //   limit: 10,
+        // });
+
+        // const alreadyInvoiced = existingInvoices.data.some(inv =>
+        //   inv.metadata?.payment_intent === paymentIntent.id
+        // );
+
+        // if (alreadyInvoiced) {
+        //   console.log("⚠️ Invoice already exists for:", paymentIntent.id);
+        //   return res.json({ received: true });
+        // }
+
+        // // 4️⃣ Create invoice item
+        // await stripe.invoiceItems.create({
+        //   customer: paymentIntent.customer,
+        //   amount: paymentIntent.amount,
+        //   currency: paymentIntent.currency,
+        //   description: paymentIntent.metadata.productName,
+        // });
+
+        // // 5️⃣ Create & finalize invoice
+        // const invoice = await stripe.invoices.create({
+        //   customer: paymentIntent.customer,
+        //   collection_method: 'send_invoice', // 🔥 Required to use sendInvoice()
+        //   days_until_due: 30,
+        //   auto_advance: false,
+        //   metadata: {
+        //     payment_intent: paymentIntent.id, // 🔥 idempotency marker
+        //   },
+        // });
 
 
-                console.log("✅ Invoice created:", invoice);
 
 
-        // 3️⃣ Finalize immediately (🔥 THIS sends the email)
-        await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(invoice.id);
+        //         console.log("✅ Invoice created:", invoice);
 
 
-        console.log("Invoice finalized & email sent:", invoice.id);
+        // // 3️⃣ Finalize immediately (🔥 THIS sends the email)
+        // await stripe.invoices.finalizeInvoice(invoice.id);
+        // await stripe.invoices.sendInvoice(invoice.id);
+
+
+        // console.log("Invoice finalized & email sent:", invoice.id);
 
 
 
@@ -118,8 +125,7 @@ app.post(
     // Make POST request to Xano
     const response = await axios.put(xanoUrl, {
       userId: paymentIntent.metadata.userId,
-      invoicePdf: invoice.invoice_pdf,
-      hostedInvoiceUrl: invoice.hosted_invoice_url,
+      receiptUrl: charge.receipt_url,
       }, {
       headers: {
         "Content-Type": "application/json",
