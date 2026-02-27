@@ -253,11 +253,21 @@ app.post("/update-price", async(req, res)=> {
 
 
     let newPrice
-    let editedProductId
+    let editedPriceId
 
       for (let prod=0; prod<product.length; prod++) {
 
-      editedProductId = product[prod].editedProductId
+      editedPriceId = product[prod].editedPriceId
+
+
+
+      const price = await stripe.prices.retrieve(editedPriceId);
+
+      const productId = price.product; 
+
+      console.log("The Product ID is:", productId);
+
+
    // 1. Convert to cents to avoid floating point issues
         const baseCents = product[prod].editedPrice * 100;
 
@@ -270,13 +280,13 @@ app.post("/update-price", async(req, res)=> {
         newPrice = await stripe.prices.create({
           unit_amount: totalAmountCents,
           currency: "eur",
-          product: product[prod].editedProductId,
+          product: productId,
         })
 
       }
 
         res.json({
-          productId: editedProductId,
+          productId: editedPriceId,
           priceId: newPrice.id,
           totalCharged: totalAmountCents / 100 // Returns total in EUR for your UI
         })
