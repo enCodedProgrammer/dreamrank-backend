@@ -257,9 +257,9 @@ app.post("/update-price", async(req, res)=> {
 
       for (let prod=0; prod<product.length; prod++) {
 
-      editedProductId = prod.editedProductId
+      editedProductId = product[prod].editedProductId
    // 1. Convert to cents to avoid floating point issues
-        const baseCents = product.editedPrice * 100;
+        const baseCents = product[prod].editedPrice * 100;
 
         // 2. Calculate fees
         const platformFee = baseCents * 0.10;          // 5% Dreamranks customers fee
@@ -270,7 +270,7 @@ app.post("/update-price", async(req, res)=> {
         newPrice = await stripe.prices.create({
           unit_amount: totalAmountCents,
           currency: "eur",
-          product: product.editedProductId,
+          product: product[prod].editedProductId,
         })
 
       }
