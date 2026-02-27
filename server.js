@@ -248,6 +248,43 @@ app.post("/create-plan", async (req, res) => {
 
 
 
+app.post("/update-price", async(req, res)=> {
+  const product = req.body.product;
+
+
+    let newPrice
+    let editedProductId
+
+      for (let prod=0; prod<product.length; prod++) {
+
+      editedProductId = prod.editedProductId
+   // 1. Convert to cents to avoid floating point issues
+        const baseCents = product.editedPrice * 100;
+
+        // 2. Calculate fees
+        const platformFee = baseCents * 0.10;          // 5% Dreamranks customers fee
+        //const processingFee = ((baseCents + platformFee ) * 0.015) + 25; // 1.5% + 25 cents stripe fee
+        // 3. Calculate total and round to nearest integer
+        const totalAmountCents = Math.round(baseCents + platformFee);
+
+        newPrice = await stripe.prices.create({
+          unit_amount: totalAmountCents,
+          currency: "eur",
+          product: product.editedProductId,
+        })
+
+      }
+
+        res.json({
+          productId: editedProductId,
+          priceId: newPrice.id,
+          totalCharged: totalAmountCents / 100 // Returns total in EUR for your UI
+        })
+
+})
+
+
+
 
 // 1️⃣ Create a Payment Intent (Charge User)
 app.post("/create-payment-intent", async (req, res) => {
