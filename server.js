@@ -282,8 +282,8 @@ app.post("/update-price", async(req, res)=> {
           product: productId,
         })
         const newData = {
-          priceId: editedPriceId,
-          newPrice: newPrice.id,
+          priceId: newPrice.id,
+          //newPriceId: newPrice.id,
           amount: totalAmountCents /100
         }
         data.push(newData)
