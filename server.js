@@ -256,7 +256,10 @@ app.post("/update-price", async(req, res)=> {
 
       for (let prod=0; prod<product.length; prod++) {
 
-      editedPriceId = product[prod].editedPriceId
+      const editedPriceId = product[prod].editedPriceId
+      const id = product[prod].id
+      const duration = product[prod].duration
+      const description = product[prod].description
 
 
 
@@ -282,6 +285,9 @@ app.post("/update-price", async(req, res)=> {
           product: productId,
         })
         const newData = {
+          id,
+          duration,
+          description,
           priceId: newPrice.id,
           //newPriceId: newPrice.id,
           amount: totalAmountCents /100
