@@ -302,7 +302,6 @@ app.post("/update-price", async(req, res)=> {
 
 
 
-
 // 1️⃣ Create a Payment Intent (Charge User)
 app.post("/create-payment-intent", async (req, res) => {
   const priceId = req.body.priceId
