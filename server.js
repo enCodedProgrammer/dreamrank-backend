@@ -252,8 +252,7 @@ app.post("/update-price", async(req, res)=> {
   const product = req.body.product;
 
 
-    let newPrice
-    let editedPriceId
+    let data = []
 
       for (let prod=0; prod<product.length; prod++) {
 
@@ -275,21 +274,23 @@ app.post("/update-price", async(req, res)=> {
         const platformFee = baseCents * 0.10;          // 5% Dreamranks customers fee
         //const processingFee = ((baseCents + platformFee ) * 0.015) + 25; // 1.5% + 25 cents stripe fee
         // 3. Calculate total and round to nearest integer
-        const totalAmountCents = Math.round(baseCents + platformFee);
+        totalAmountCents = Math.round(baseCents + platformFee);
 
         newPrice = await stripe.prices.create({
           unit_amount: totalAmountCents,
           currency: "eur",
           product: productId,
         })
+        const newData = {
+          priceId: newPrice.id,
+          //newPriceId: newPrice.id,
+          amount: totalAmountCents /100
+        }
+        data.push(newData)
 
       }
 
-        res.json({
-          productId: editedPriceId,
-          priceId: newPrice.id,
-          totalCharged: totalAmountCents / 100 // Returns total in EUR for your UI
-        })
+        res.json(data)
 
 })
 
