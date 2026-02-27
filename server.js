@@ -252,9 +252,7 @@ app.post("/update-price", async(req, res)=> {
   const product = req.body.product;
 
 
-    let newPrice
-    let editedPriceId
-    let totalAmountCents
+    let data = []
 
       for (let prod=0; prod<product.length; prod++) {
 
@@ -283,14 +281,16 @@ app.post("/update-price", async(req, res)=> {
           currency: "eur",
           product: productId,
         })
+        const newData = {
+          priceId: editedPriceId,
+          newPrice: newPrice.id,
+          amount: totalAmountCents /100
+        }
+        data.push(newData)
 
       }
 
-        res.json({
-          productId: editedPriceId,
-          priceId: newPrice.id,
-          totalCharged: totalAmountCents / 100 // Returns total in EUR for your UI
-        })
+        res.json(data)
 
 })
 
