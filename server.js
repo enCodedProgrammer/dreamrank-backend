@@ -64,12 +64,81 @@ app.post(
 
       try {
 
+        const metadata = paymentIntent.metadata;
 
-          const charge = await stripe.charges.retrieve(
+            const {
+              userId,
+              productName,
+              coachName,
+              coachEmail,
+              planId,
+              coachId,
+              planName,
+              startTime,
+              price,
+              endTime,
+              username
+            } = metadata;
+
+                      const charge = await stripe.charges.retrieve(
               paymentIntent.latest_charge
             );
 
             console.log(charge.receipt_url);
+
+        console.log(`Updating payment ${paymentIntent.id} for User ${userId}`);
+        
+        const updatePayment = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:Z2-WZuPJ/payments_`,  {
+                user_id: userId,
+                payment_id: paymentIntent.id,
+                amount: price,
+                coach_id: coachId,
+            }, {
+          headers: {
+          "Content-Type": "application/json",
+          }
+          });
+
+
+
+
+          const postOrder = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:Z2-WZuPJ/orders`,  {
+          user_id: userId,
+          payment_id: paymentIntent.id,
+          price: price,
+          coach_id: coachId,
+          offers_id: planId,
+          status: "Bestellt",
+          startDateTime: startTime,
+          endDateTime: endTime,
+          user: username,
+          offer: planName,
+          receiptUrl: charge.receipt_url
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          }
+          });
+        
+
+        // 4. Send success back to Wized
+        res.json({ 
+            success: true, 
+            message: "Payment record updated successfully",
+            receivedData: { userId, price, coachId }
+        });
+
+
+
+
+
+
+
+
+
+
+
+
         // // 3️⃣ Prevent duplicate invoices (idempotency)
         // const existingInvoices = await stripe.invoices.list({
         //   customer: paymentIntent.customer,
@@ -120,20 +189,20 @@ app.post(
 
 
 
-        const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1`; // replace with your endpoint
+    //     const xanoUrl = `https://xrrb-7twc-ygpm.n7e.xano.io/api:lNR00Q5X/orders/1`; // replace with your endpoint
 
-    // Make POST request to Xano
-    const response = await axios.put(xanoUrl, {
-      userId: paymentIntent.metadata.userId,
-      receiptUrl: charge.receipt_url,
-      }, {
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
+    // // Make POST request to Xano
+    // const response = await axios.put(xanoUrl, {
+    //   userId: paymentIntent.metadata.userId,
+    //   receiptUrl: charge.receipt_url,
+    //   }, {
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   }
+    // });
 
 
-    console.log("xnao invoice sent", response)
+    // console.log("xnao invoice sent", response)
 
 
 
@@ -141,7 +210,7 @@ app.post(
 
 
       } catch (err) {
-        console.error("❌ Invoice creation failed:", err);
+        console.error("❌ Error updating order:", err);
       }
     }
 
@@ -221,7 +290,7 @@ app.post("/create-stripe-account", async (req, res) => {
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
     try {
-        const { accountId, name, price } = req.body; // price is in Euros (e.g., 100)
+        const { accountId, name, price, coachName, coachEmail } = req.body; // price is in Euros (e.g., 100)
 
         // 1. Convert to cents to avoid floating point issues
         const baseCents = price * 100;
@@ -233,7 +302,13 @@ app.post("/create-plan", async (req, res) => {
         const totalAmountCents = Math.round(baseCents + platformFee);
 
         // CCreate the Product
-        const product = await stripe.products.create({ name });
+        const product = await stripe.products.create({
+          name,
+          metadata: {
+            coachName: coachName ,
+            coachEmail: coachEmail
+          } // 👈 Tag it here        
+        });
 
         // Create the Price with the bundled fees
         const priceObj = await stripe.prices.create({
@@ -313,6 +388,13 @@ app.post("/create-payment-intent", async (req, res) => {
   const priceId = req.body.priceId
   const paymentOption = req.body.paymentOption
   const userId = req.body.userId
+  const coachId = req.body.coachId
+  const planId = req.body.planId
+ const  planName = req.body.planName
+ const  startTime = req.body.startTime
+ const endTime = req.body.endTime
+ const xanoPrice = req.body.price
+ const username = req.body.username
 
   console.log("priceID", priceId)
   
@@ -327,7 +409,12 @@ app.post("/create-payment-intent", async (req, res) => {
 
       // 2️⃣ Fetch product details from Stripe to get the name
       const product = await stripe.products.retrieve(price.product);
-      const productName = product.name;
+
+
+      // 2. Extract coachName from product metadata
+        const coachName = product.metadata.coachName || "Unknown Coach";
+        const coachEmail = product.metadata.coachEmail || "Unknown Email"
+        const productName = product.name;
 
       console.log("product", product)
 
@@ -352,14 +439,27 @@ app.post("/create-payment-intent", async (req, res) => {
           currency: "eur",
           customer: customer.id,
           payment_method_types: [paymentOption],
-          metadata: {
-            userId: userId, 
-          },
+          // metadata: {
+          //   userId: userId, 
+          // },
           //automatic_payment_methods: {
           //  enabled: true,
           //}
           payment_method: paymentMethods.id,
-          metadata: { productName } // ✅ Store product name inside Stripe
+          metadata: { 
+                userId: userId,
+                productName: productName,
+                coachName: coachName, // 👈 Now it shows in the payment!
+                coachEmail: coachEmail,
+                planId: planId,
+                price: xanoPrice,
+                coachId: coachId,
+                planName: planName,
+                startTime: startTime,
+                endTime: endTime,
+                username: username
+
+            }
       });
 
       res.json({ clientSecret: paymentIntent.client_secret });
@@ -380,7 +480,10 @@ app.post("/create-payment-intent", async (req, res) => {
 
       // 2️⃣ Fetch product details from Stripe to get the name
       const product = await stripe.products.retrieve(price.product);
-      const productName = product.name;
+            // 2. Extract coachName from product metadata
+        const coachName = product.metadata.coachName || "Unknown Coach";
+        const coachEmail = product.metadata.coachEmail || "Unknown Email"
+        const productName = product.name;
 
       console.log("product", product)
 
@@ -399,12 +502,20 @@ app.post("/create-payment-intent", async (req, res) => {
           customer: customer.id,
           payment_method_types: [paymentOption],
           metadata: {
-            userId: userId
+            userId: userId,
+            productName: productName,
+            coachName: coachName, // 👈 Now it shows in the payment!
+            coachEmail: coachEmail,
+            planId: planId,
+            coachId: coachId,
+            planName: planName,
+            startTime: startTime,
+            endTime: endTime,
           },
           //automatic_payment_methods: {
           //  enabled: true,
           //},
-          metadata: { productName } // ✅ Store product name inside Stripe
+          // metadata: { productName } // ✅ Store product name inside Stripe
       });
 
       res.json({ clientSecret: paymentIntent.client_secret });
