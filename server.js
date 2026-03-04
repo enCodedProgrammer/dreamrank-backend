@@ -61,6 +61,7 @@ app.post(
         console.error("❌ No customer on PaymentIntent:", paymentIntent.id, paymentIntent);
         return res.json({ received: true });
       }
+      
 
       try {
 
