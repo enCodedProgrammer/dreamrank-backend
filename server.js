@@ -276,7 +276,21 @@ app.post("/create-stripe-account", async (req, res) => {
 
         coaches.push({ email, accountId: account.id, earnings: 0 });
 
-        res.json({ accountId: account.id });
+        //res.json({ accountId: account.id });
+
+        const accountLink = await stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: "https://www.dreamranks.de/reauth",
+          return_url: "https://www.dreamranks.de/dashboard",
+          type: "account_onboarding"
+        });
+
+
+        res.json({
+          accountId: account.id,
+          onboardingUrl: accountLink.url
+        });
+
     } catch (error) {
       console.error("Stripe Error:", error);
       res.status(500).json({ 
@@ -286,6 +300,8 @@ app.post("/create-stripe-account", async (req, res) => {
     });
         //res.status(500).json({ error: error.message });
     }
+
+    
 });
 
 // 2️⃣ Create a Plan
@@ -429,9 +445,9 @@ app.post("/create-payment-intent", async (req, res) => {
 
 
       const paymentMethods = await stripe.paymentMethods.list({
-  customer: customer.id,
-  type: 'paypal',
-});
+        customer: customer.id,
+        type: 'paypal',
+      });
 
 
 
@@ -440,12 +456,15 @@ app.post("/create-payment-intent", async (req, res) => {
           currency: "eur",
           customer: customer.id,
           payment_method_types: [paymentOption],
-          // metadata: {
-          //   userId: userId, 
-          // },
-          //automatic_payment_methods: {
-          //  enabled: true,
-          //}
+
+            // ✅ PLATFORM FEE (your 10%)
+          application_fee_amount: Math.round(amount * 0.10),
+
+          // ✅ SEND REMAINDER TO COACH
+          transfer_data: {
+            destination: coachStripeAccountId,
+          },
+
           payment_method: paymentMethods.id,
           metadata: { 
                 userId: userId,
@@ -502,6 +521,15 @@ app.post("/create-payment-intent", async (req, res) => {
           currency: "eur",
           customer: customer.id,
           payment_method_types: [paymentOption],
+
+            // ✅ PLATFORM FEE (your 10%)
+          application_fee_amount: Math.round(amount * 0.10),
+
+          // ✅ SEND REMAINDER TO COACH
+          transfer_data: {
+            destination: coachStripeAccountId,
+          },
+
           metadata: {
             userId: userId,
             productName: productName,
@@ -558,6 +586,37 @@ app.post("/create-checkout-session", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+
+app.post("/withdraw", async (req, res) => {
+  try {
+    const { accountId, amount } = req.body; // amount in EUR
+
+    // Convert to cents
+    const payout = await stripe.payouts.create(
+      {
+        amount: Math.round(amount * 100),
+        currency: "eur"
+      },
+      {
+        stripeAccount: accountId
+      }
+    );
+
+    res.json({
+      success: true,
+      payout
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
 
 // 4️⃣ Pay Coaches (Send 80%)
 app.post("/pay-coaches", async (req, res) => {
