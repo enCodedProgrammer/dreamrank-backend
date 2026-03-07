@@ -436,6 +436,7 @@ app.post("/create-payment-intent", async (req, res) => {
  const endTime = req.body.endTime
  const xanoPrice = req.body.price
  const username = req.body.username
+ const coach_percent = req.body.coach_percent / 100
 
   console.log("priceID", priceId)
   
@@ -482,7 +483,7 @@ app.post("/create-payment-intent", async (req, res) => {
           payment_method_types: [paymentOption],
 
             // ✅ PLATFORM FEE (your 10%)
-          application_fee_amount: Math.round(amount * 0.10),
+          application_fee_amount: Math.round(amount * 0.10 + amount * 0.90 * 0.15),
 
           // ✅ SEND REMAINDER TO COACH
           transfer_data: {
