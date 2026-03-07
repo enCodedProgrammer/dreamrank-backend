@@ -307,7 +307,7 @@ app.post("/create-stripe-account", async (req, res) => {
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
     try {
-        const { planList, accountId, name, price, coachName, coachEmail } = req.body; // price is in Euros (e.g., 100)
+        const { planList, accountId, coachName, coachEmail, group, description, duration, coach_id, aktiv } = req.body; // price is in Euros (e.g., 100)
         console.log("req.body", req.body)
         let response = []
 
@@ -338,11 +338,34 @@ app.post("/create-plan", async (req, res) => {
             // If this is a subscription, add: recurring: { interval: 'month' },
         });
 
+
+
+
         response.push({priceId: priceObj.id, totalCharged: totalAmountCents / 100})
 
-        }
+        //for (let r=0; r< response.length; r++){
 
-        res.json(response);
+          const postPlan = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/createplan`,  {
+          priceId: priceObj.priceId,
+          name: `${group} ${planList[i].name}`,
+          group: group,
+          topic: planList[i].name,
+          description: description,
+          price: planList[i].price,
+          duration: duration,
+          coach_id: coach_id,
+          aktiv: aktiv,        
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          }
+          });
+
+        //}
+
+      }
+
+      res.json(response);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
