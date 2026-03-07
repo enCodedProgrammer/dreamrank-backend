@@ -267,7 +267,7 @@ let coaches = []; // Store coach details in memory
 // 1️⃣ Create Stripe Connect Account
 app.post("/create-stripe-account", async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, coachId, coachToken } = req.body;
         const account = await stripe.accounts.create({
             type: "express",
             email: email,
@@ -284,6 +284,25 @@ app.post("/create-stripe-account", async (req, res) => {
           return_url: "https://www.dreamranks.de/dashboard",
           type: "account_onboarding"
         });
+
+
+
+
+
+        const patchCoachStripe = await axios.patch(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/coach_stripe/${coachId}`,  {
+          coach_id: coachId,
+          stripe_account_id: account.id,
+          onboardingUrl: accountLink.url 
+     
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${coachToken}`,
+          }
+          });
+
+
+
 
 
         res.json({
