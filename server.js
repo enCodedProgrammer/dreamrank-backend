@@ -344,7 +344,7 @@ app.post("/create-plan", async (req, res) => {
         //for (let r=0; r< response.length; r++){
 
           const postPlan = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/createplan`,  {
-          priceId: priceObj.id,
+          price_id: priceObj.id,
           name: `${group} ${planList[i].name}`,
           group: group,
           topic: planList[i].name,
