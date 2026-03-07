@@ -307,7 +307,7 @@ app.post("/create-stripe-account", async (req, res) => {
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
     try {
-        const { planList, coachName, coachEmail, group, description, duration, coach_id, aktiv } = req.body; // price is in Euros (e.g., 100)
+        const { planList, coachName, coachEmail, group, description, duration, coach_id, aktiv, coachToken } = req.body; // price is in Euros (e.g., 100)
         console.log("req.body", req.body)
         let response = []
 
@@ -335,9 +335,7 @@ app.post("/create-plan", async (req, res) => {
             unit_amount: totalAmountCents,
             currency: "eur",
             product: product.id,
-            // If this is a subscription, add: recurring: { interval: 'month' },
         });
-
 
 
 
@@ -358,10 +356,9 @@ app.post("/create-plan", async (req, res) => {
           }, {
           headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${coachToken}`,
           }
           });
-
-        //}
 
       }
 
