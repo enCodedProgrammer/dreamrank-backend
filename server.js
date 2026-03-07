@@ -308,12 +308,12 @@ app.post("/create-stripe-account", async (req, res) => {
 app.post("/create-plan", async (req, res) => {
     try {
         const { planList, accountId, name, price, coachName, coachEmail } = req.body; // price is in Euros (e.g., 100)
-
+        console.log("req.body", req.body)
         let response = []
 
         for (let i=0; i<planList.length; i++) {
         // 1. Convert to cents to avoid floating point issues
-        const baseCents = planList.price * 100;
+        const baseCents = planList[i].price * 100;
 
         // 2. Calculate fees
         const platformFee = baseCents * 0.10;          // 5% Dreamranks customers fee
@@ -323,7 +323,7 @@ app.post("/create-plan", async (req, res) => {
 
         // CCreate the Product
         const product = await stripe.products.create({
-          name: planList.name,
+          name: planList[i].name,
           metadata: {
             coachName: coachName ,
             coachEmail: coachEmail
