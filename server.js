@@ -52,9 +52,30 @@ app.post(
       return res.status(400).send("Webhook Error");
     }
 
-    // 2️⃣ Handle successful payment
     if (event.type === "payment_intent.succeeded") {
+
+
       const paymentIntent = event.data.object;
+        const metadata = paymentIntent.metadata;
+
+        if (metadata.creatorAccountId && metadata.creatorAccountId !== "none") {
+            try {
+                const transfer = await stripe.transfers.create({
+                    amount: parseInt(metadata.creatorCutCents), 
+                    currency: 'eur',
+                    destination: metadata.creatorAccountId,
+                    description: `Creator commission for ${metadata.productName}`,
+                    transfer_group: paymentIntent.transfer_group 
+                });
+
+                console.log(`✅ Creator Payout Successful: ${transfer.id}`);
+            } catch (transferError) {
+                console.error("❌ Creator Payout Failed:", transferError.message);
+            }
+        }
+
+
+
 
       // 🔴 Safety check
       if (!paymentIntent.customer) {
@@ -280,8 +301,8 @@ app.post("/create-stripe-account", async (req, res) => {
 
         const accountLink = await stripe.accountLinks.create({
           account: account.id,
-          refresh_url: "https://www.dreamranks.de/reauth",
-          return_url: "https://www.dreamranks.de/dashboard",
+          refresh_url: "https://www.dreamranks.de/coach/dashboard",
+          return_url: "https://www.dreamranks.de/coach/dashboard",
           type: "account_onboarding"
         });
 
@@ -322,6 +343,12 @@ app.post("/create-stripe-account", async (req, res) => {
 
     
 });
+
+
+
+
+
+
 
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
@@ -455,9 +482,13 @@ app.post("/create-payment-intent", async (req, res) => {
  const endTime = req.body.endTime
  const xanoPrice = req.body.price
  const username = req.body.username
+ const coachStripeAccountId = req.body.coachStripeAccountId
  const coachFees = req.body.coachFees / 100
+ const creatorStripeAccountId = req.body?.creatorStripeAccountId
 
-  console.log("priceID", priceId)
+const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
+
+  console.log("body", req.body)
   
   if (paymentOption == "paypal") {
   try {
@@ -494,6 +525,7 @@ app.post("/create-payment-intent", async (req, res) => {
       });
 
 
+      const creatorCutCents = validCreatorAccount ? Math.round(amount * 0.05) : 0;
 
       const paymentIntent = await stripe.paymentIntents.create({
           amount: amount,
@@ -502,7 +534,7 @@ app.post("/create-payment-intent", async (req, res) => {
           payment_method_types: [paymentOption],
 
             // ✅ PLATFORM FEE (your 10%)
-          application_fee_amount: Math.round(amount * 0.10 + amount * 0.90 * coachFees),
+          application_fee_amount: Math.round((amount * 0.10) + (amount * coachFees)),
 
           // ✅ SEND REMAINDER TO COACH
           transfer_data: {
@@ -521,7 +553,9 @@ app.post("/create-payment-intent", async (req, res) => {
                 planName: planName,
                 startTime: startTime,
                 endTime: endTime,
-                username: username
+                username: username,
+                creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
+                creatorCutCents: creatorCutCents
 
             }
       });
@@ -560,6 +594,8 @@ app.post("/create-payment-intent", async (req, res) => {
 
 
 
+            const creatorCutCents = creatorStripeAccountId ? Math.round(amount * 0.05) : 0;
+
       const paymentIntent = await stripe.paymentIntents.create({
           amount: amount,
           currency: "eur",
@@ -567,28 +603,30 @@ app.post("/create-payment-intent", async (req, res) => {
           payment_method_types: [paymentOption],
 
             // ✅ PLATFORM FEE (your 10%)
-          application_fee_amount: Math.round(amount * 0.10),
+          application_fee_amount: Math.round(amount * 0.10 + amount * 0.90 * coachFees + creatorCutCents),
 
           // ✅ SEND REMAINDER TO COACH
           transfer_data: {
             destination: coachStripeAccountId,
           },
 
-          metadata: {
-            userId: userId,
-            productName: productName,
-            coachName: coachName, // 👈 Now it shows in the payment!
-            coachEmail: coachEmail,
-            planId: planId,
-            coachId: coachId,
-            planName: planName,
-            startTime: startTime,
-            endTime: endTime,
-          },
-          //automatic_payment_methods: {
-          //  enabled: true,
-          //},
-          // metadata: { productName } // ✅ Store product name inside Stripe
+          payment_method: paymentMethods.id,
+          metadata: { 
+                userId: userId,
+                productName: productName,
+                coachName: coachName, // 👈 Now it shows in the payment!
+                coachEmail: coachEmail,
+                planId: planId,
+                price: xanoPrice,
+                coachId: coachId,
+                planName: planName,
+                startTime: startTime,
+                endTime: endTime,
+                username: username,
+                creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
+                creatorCutCents: creatorCutCents
+
+            }
       });
 
       res.json({ clientSecret: paymentIntent.client_secret });
@@ -655,6 +693,94 @@ app.post("/withdraw", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+// 1️⃣ Create Stripe Connect Account
+app.post("/create-stripe-account-creator", async (req, res) => {
+    try {
+        const { email, creatorId, creatorToken } = req.body;
+        const account = await stripe.accounts.create({
+            type: "express",
+            email: email,
+            capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+        });
+
+        //coaches.push({ email, accountId: account.id, earnings: 0 });
+
+        //res.json({ accountId: account.id });
+
+        const accountLink = await stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: "https://www.dreamranks.de/creator/dashboard",
+          return_url: "https://www.dreamranks.de/creator/dashboard",
+          type: "account_onboarding"
+        });
+
+
+
+
+
+        const patchCreatorStripe = await axios.patch(`https://xrrb-7twc-ygpm.n7e.xano.io/api:2CH26AKL/creator_stripe/${creatorId}`,  {
+          creator_id: creatorId,
+          stripe_account_id: account.id,
+          onboardingUrl: accountLink.url 
+     
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${creatorToken}`,
+          }
+          });
+
+
+
+
+
+        res.json({
+          accountId: account.id,
+          onboardingUrl: accountLink.url
+        });
+
+    } catch (error) {
+      console.error("Stripe Error:", error);
+      res.status(500).json({ 
+        message: error.message,
+        type: error.type,
+        raw: error.raw
+    });
+        //res.status(500).json({ error: error.message });
+    }
+
+    
+});
+
+
+
+
+app.post("/reauth", async (req, res) => {
+  try {
+
+    const accountId = req.query.accountId; // or get from session/database
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: "https://www.dreamranks.de/coach/dashboard",
+      return_url: "https://www.dreamranks.de/coach/dashboard",
+      type: "account_onboarding"
+    });
+
+    res.json({url: accountLink.url});
+
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 });
 
