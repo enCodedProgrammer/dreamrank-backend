@@ -52,9 +52,30 @@ app.post(
       return res.status(400).send("Webhook Error");
     }
 
-    // 2️⃣ Handle successful payment
     if (event.type === "payment_intent.succeeded") {
+
+
       const paymentIntent = event.data.object;
+        const metadata = paymentIntent.metadata;
+
+        if (metadata.creatorAccountId && metadata.creatorAccountId !== "none") {
+            try {
+                const transfer = await stripe.transfers.create({
+                    amount: parseInt(metadata.creatorCutCents), 
+                    currency: 'eur',
+                    destination: metadata.creatorAccountId,
+                    description: `Creator commission for ${metadata.productName}`,
+                    transfer_group: paymentIntent.transfer_group 
+                });
+
+                console.log(`✅ Creator Payout Successful: ${transfer.id}`);
+            } catch (transferError) {
+                console.error("❌ Creator Payout Failed:", transferError.message);
+            }
+        }
+
+
+
 
       // 🔴 Safety check
       if (!paymentIntent.customer) {
@@ -467,7 +488,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
 const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
 
-  console.log("priceID", priceId)
+  console.log("body", req.body)
   
   if (paymentOption == "paypal") {
   try {
@@ -513,7 +534,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
           payment_method_types: [paymentOption],
 
             // ✅ PLATFORM FEE (your 10%)
-          application_fee_amount: Math.round(amount * 0.10 + amount * 0.90 * coachFees + creatorCutCents),
+          application_fee_amount: Math.round((amount * 0.10) + (amount * coachFees)),
 
           // ✅ SEND REMAINDER TO COACH
           transfer_data: {
@@ -692,7 +713,7 @@ app.post("/create-stripe-account-creator", async (req, res) => {
             capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
         });
 
-        coaches.push({ email, accountId: account.id, earnings: 0 });
+        //coaches.push({ email, accountId: account.id, earnings: 0 });
 
         //res.json({ accountId: account.id });
 
@@ -707,7 +728,7 @@ app.post("/create-stripe-account-creator", async (req, res) => {
 
 
 
-        const patchCreatorStripe = await axios.patch(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/coach_stripe/${creatorId}`,  {
+        const patchCreatorStripe = await axios.patch(`https://xrrb-7twc-ygpm.n7e.xano.io/api:2CH26AKL/creator_stripe/${creatorId}`,  {
           creator_id: creatorId,
           stripe_account_id: account.id,
           onboardingUrl: accountLink.url 
