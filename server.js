@@ -353,7 +353,7 @@ app.post("/create-stripe-account", async (req, res) => {
 // 2️⃣ Create a Plan
 app.post("/create-plan", async (req, res) => {
     try {
-        const { planList, coachName, coachEmail, group, description, duration, coach_id, aktiv, coachToken } = req.body; // price is in Euros (e.g., 100)
+        const { planList, coachName, coachEmail, group, name, description, duration, coach_id, aktiv, coachToken } = req.body; // price is in Euros (e.g., 100)
         console.log("req.body", req.body)
         let response = []
 
@@ -369,7 +369,8 @@ app.post("/create-plan", async (req, res) => {
 
         // CCreate the Product
         const product = await stripe.products.create({
-          name: planList[i].name,
+          //name: planList[i].name,
+          name: `${planList[i].bundle} ${group} ${name} Discount: ${planList[i].discount}`,
           metadata: {
             coachName: coachName ,
             coachEmail: coachEmail
@@ -391,9 +392,11 @@ app.post("/create-plan", async (req, res) => {
 
           const postPlan = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/createplan`,  {
           price_id: priceObj.id,
-          name: `${group} ${planList[i].name}`,
+          name: `${group} ${name}`,
           group: group,
           topic: planList[i].name,
+          bundle: planList[i].bundle,
+          discount: planList[i].discount,
           description: description,
           price: planList[i].price,
           duration: duration,
