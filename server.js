@@ -393,7 +393,7 @@ app.post("/create-plan", async (req, res) => {
           price_id: priceObj.id,
           name: `${group} ${name}`,
           group: group,
-          topic: planList[i].name,
+          topic: name,
           bundle: planList[i].bundle,
           discount: planList[i].discount,
           description: description,
