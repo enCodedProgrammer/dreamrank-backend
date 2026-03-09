@@ -385,7 +385,6 @@ app.post("/create-plan", async (req, res) => {
         });
 
 
-
         response.push({priceId: priceObj.id, totalCharged: totalAmountCents / 100})
 
 
