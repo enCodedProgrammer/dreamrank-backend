@@ -362,7 +362,7 @@ app.post("/create-plan", async (req, res) => {
         const baseCents = planList[i].price * 100;
 
         // 2. Calculate fees
-        const platformFee = baseCents * 0.10;          // 5% Dreamranks customers fee
+        const platformFee = baseCents * 0.10;          // 10% Dreamranks customers fee
         //const processingFee = ((baseCents + platformFee ) * 0.015) + 25; // 1.5% + 25 cents stripe fee
         // 3. Calculate total and round to nearest integer
         const totalAmountCents = Math.round(baseCents + platformFee);
@@ -388,7 +388,6 @@ app.post("/create-plan", async (req, res) => {
 
         response.push({priceId: priceObj.id, totalCharged: totalAmountCents / 100})
 
-        //for (let r=0; r< response.length; r++){
 
           const postPlan = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/createplan`,  {
           price_id: priceObj.id,
