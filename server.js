@@ -781,8 +781,19 @@ app.post("/reauth", async (req, res) => {
     res.json({url: accountLink.url});
 
   } catch (error) {
-    res.status(500).send(error.message);
-  }
+  console.error("Stripe Error:", {
+    message: error.message,
+    type: error.type,
+    code: error.code,
+    param: error.param,
+    raw: error.raw
+  });
+
+  res.status(500).json({
+    message: error.message,
+    code: error.code
+  });
+}
 });
 
 
