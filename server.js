@@ -769,7 +769,7 @@ app.post("/create-stripe-account-creator", async (req, res) => {
 app.post("/reauth", async (req, res) => {
   try {
 
-    const accountId = req.query.accountId; // or get from session/database
+    const accountId = req.body.accountId; // or get from session/database
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
