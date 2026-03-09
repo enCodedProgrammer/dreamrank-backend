@@ -370,7 +370,7 @@ app.post("/create-plan", async (req, res) => {
         // CCreate the Product
         const product = await stripe.products.create({
           //name: planList[i].name,
-          name: `${planList[i].bundle} ${group} ${name} Discount: ${planList[i].discount}`,
+          name: `${planList[i].bundle}X - ${group} ${name} Discount: ${planList[i].discount}%`,
           metadata: {
             coachName: coachName ,
             coachEmail: coachEmail
