@@ -542,7 +542,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
             destination: coachStripeAccountId,
           },
 
-          payment_method: paymentMethods.id,
+          //payment_method: paymentMethods.id,
           metadata: { 
                 userId: userId,
                 productName: productName,
@@ -611,7 +611,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
             destination: coachStripeAccountId,
           },
 
-          payment_method: paymentMethods.id,
+          //payment_method: paymentMethods.id,
           metadata: { 
                 userId: userId,
                 productName: productName,
