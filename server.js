@@ -370,7 +370,7 @@ app.post("/create-plan", async (req, res) => {
         // CCreate the Product
         const product = await stripe.products.create({
           //name: planList[i].name,
-          name: `${planList[i].bundle} ${group} ${name} Discount: ${planList[i].discount}`,
+          name: `${planList[i].bundle}X - ${group} ${name} Discount: ${planList[i].discount}%`,
           metadata: {
             coachName: coachName ,
             coachEmail: coachEmail
@@ -385,7 +385,6 @@ app.post("/create-plan", async (req, res) => {
         });
 
 
-
         response.push({priceId: priceObj.id, totalCharged: totalAmountCents / 100})
 
 
@@ -393,7 +392,7 @@ app.post("/create-plan", async (req, res) => {
           price_id: priceObj.id,
           name: `${group} ${name}`,
           group: group,
-          topic: planList[i].name,
+          topic: name,
           bundle: planList[i].bundle,
           discount: planList[i].discount,
           description: description,
