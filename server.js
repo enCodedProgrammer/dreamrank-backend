@@ -764,6 +764,36 @@ app.post("/create-stripe-account-creator", async (req, res) => {
 });
 
 
+app.post("/creator-reauth", async (req, res) => {
+  try {
+    console.log("body", req.body)
+    const accountId = req.body.accountId; // or get from session/database
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: "https://www.dreamranks.de/creator/dashboard",
+      return_url: "https://www.dreamranks.de/creator/dashboard?onboarded=true",
+      type: "account_onboarding"
+    });
+
+    res.json({url: accountLink.url});
+
+  } catch (error) {
+  console.error("Stripe Error:", {
+    message: error.message,
+    type: error.type,
+    code: error.code,
+    param: error.param,
+    raw: error.raw
+  });
+
+  res.status(500).json({
+    message: error.message,
+    code: error.code
+  });
+}
+});
+
 
 
 app.post("/reauth", async (req, res) => {
