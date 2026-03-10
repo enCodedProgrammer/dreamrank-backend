@@ -721,7 +721,7 @@ app.post("/create-stripe-account-creator", async (req, res) => {
         const accountLink = await stripe.accountLinks.create({
           account: account.id,
           refresh_url: "https://www.dreamranks.de/creator/dashboard",
-          return_url: "https://www.dreamranks.de/creator/dashboard",
+          return_url: "https://www.dreamranks.de/creator/dashboard?onboarded=true",
           type: "account_onboarding"
         });
 
@@ -774,7 +774,7 @@ app.post("/reauth", async (req, res) => {
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: "https://www.dreamranks.de/coach/dashboard",
-      return_url: "https://www.dreamranks.de/coach/dashboard",
+      return_url: "https://www.dreamranks.de/coach/dashboard?onboarded=true",
       type: "account_onboarding"
     });
 
