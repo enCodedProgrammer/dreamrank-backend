@@ -834,6 +834,8 @@ app.post("/reauth", async (req, res) => {
 app.post("verify-stripe-account", async(req, res) => {
   const { accountId, client, token, id } = req.body;
 
+  console.log("body", req.body)
+
   try {
     // 1️⃣ Ask Stripe for the real account data
     const account = await stripe.accounts.retrieve(accountId);
