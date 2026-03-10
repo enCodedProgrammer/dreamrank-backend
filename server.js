@@ -830,6 +830,60 @@ app.post("/reauth", async (req, res) => {
 
 
 
+// On your Vercel backend (e.g., /verify-creator-status)
+app.post("verify-stripe-account", async(req, res) => {
+  const { accountId, client, token, id } = req.body;
+
+  try {
+    // 1️⃣ Ask Stripe for the real account data
+    const account = await stripe.accounts.retrieve(accountId);
+
+    // 2️⃣ Check if they actually finished onboarding
+    if (account.details_submitted) {
+      
+      // 3️⃣ Securely update your Xano database here!
+          if (client == "coach") {
+          const patchCoachOnboarded = await axios.put(`https://xrrb-7twc-ygpm.n7e.xano.io/api:HFnfW3ex/coach_onboarded/${id}`,  {
+          coach_id: id,
+          onboarded: true,
+     
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          }
+          });
+
+        } else {
+
+          const patchCreatorOnboarded = await axios.put(`https://xrrb-7twc-ygpm.n7e.xano.io/api:2CH26AKL/creator-onboarded/${id}`,  {
+          creator_id: id,
+          onboarded: true,
+     
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          }
+          });
+
+        }
+
+      // await updateXanoCreatorStatus(accountId, true);
+      
+      res.status(200).json({ onboarded: true, message: "Onboarding complete!" });
+    } else {
+      res.status(200).json({ onboarded: false, message: "Onboarding incomplete." });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+
+
+
+
+
 // 4️⃣ Pay Coaches (Send 80%)
 app.post("/pay-coaches", async (req, res) => {
     try {
