@@ -831,7 +831,7 @@ app.post("/reauth", async (req, res) => {
 
 
 // On your Vercel backend (e.g., /verify-creator-status)
-app.post("verify-stripe-account", async(req, res) => {
+app.post("/verify-stripe-account", async(req, res) => {
   const { accountId, client, token, id } = req.body;
 
   console.log("body", req.body)
