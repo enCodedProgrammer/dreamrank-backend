@@ -99,7 +99,8 @@ app.post(
               startTime,
               price,
               endTime,
-              username
+              username,
+              bundle
             } = metadata;
 
                       const charge = await stripe.charges.retrieve(
@@ -141,6 +142,40 @@ app.post(
           "Content-Type": "application/json",
           }
           });
+
+          const orderId = postOrder.data.id;
+
+
+
+          const postAppointments = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:SYpZYhyn/appointments`,  {
+          orders_id: orderId,
+          startDateTime: startTime,
+          endDateTime: endTime,
+          concluded: false,
+          bundle_index: 1
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          }
+          });
+
+          if (bundle > 1) {
+          for (let i=1; i<bundle; i++) {
+          const postAppointments = await axios.post(`https://xrrb-7twc-ygpm.n7e.xano.io/api:SYpZYhyn/appointments`,  {
+          orders_id: orderId,
+          startDateTime: "",
+          endDateTime: "",
+          concluded: false,
+          bundle_index: i + 1
+          }, {
+          headers: {
+          "Content-Type": "application/json",
+          }
+          });
+          }
+
+        }
+
         
 
         // 4. Send success back to Wized
@@ -486,6 +521,7 @@ app.post("/create-payment-intent", async (req, res) => {
  const coachStripeAccountId = req.body.coachStripeAccountId
  const coachFees = req.body.coachFees / 100
  const creatorStripeAccountId = req.body?.creatorStripeAccountId
+ const bundle = req.body.bundle
  //const creatorCode = req.body?.creatorCode
 
 
@@ -558,7 +594,8 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || creatorStripeAc
                 endTime: endTime,
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
-                creatorCutCents: validCreatorAccount ? creatorCutCents : ""
+                creatorCutCents: validCreatorAccount ? creatorCutCents : "",
+                bundle: bundle
 
             }
       });
@@ -627,7 +664,8 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || creatorStripeAc
                 endTime: endTime,
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
-                creatorCutCents: creatorCutCents ? creatorCutCents : ""
+                creatorCutCents: creatorCutCents ? creatorCutCents : "",
+                bundle: bundle
 
             }
       });
