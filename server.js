@@ -486,8 +486,10 @@ app.post("/create-payment-intent", async (req, res) => {
  const coachStripeAccountId = req.body.coachStripeAccountId
  const coachFees = req.body.coachFees / 100
  const creatorStripeAccountId = req.body?.creatorStripeAccountId
+ //const creatorCode = req.body?.creatorCode
 
-const validCreatorAccount = creatorStripeAccountId !== "null" ? true : false
+
+const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : false
 
   console.log("body", req.body)
   
