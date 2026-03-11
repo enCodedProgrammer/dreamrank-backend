@@ -489,7 +489,7 @@ app.post("/create-payment-intent", async (req, res) => {
  //const creatorCode = req.body?.creatorCode
 
 
-const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : false
+const validCreatorAccount = creatorStripeAccountId !== "null" || creatorStripeAccountId !=="" ? true : false
 
   console.log("body", req.body)
   
@@ -558,7 +558,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : fal
                 endTime: endTime,
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
-                creatorCutCents: creatorCutCents
+                creatorCutCents: validCreatorAccount ? creatorCutCents : ""
 
             }
       });
