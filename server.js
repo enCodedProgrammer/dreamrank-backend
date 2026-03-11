@@ -489,7 +489,7 @@ app.post("/create-payment-intent", async (req, res) => {
  //const creatorCode = req.body?.creatorCode
 
 
-const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : false
+const validCreatorAccount = creatorStripeAccountId !== "null" || creatorStripeAccountId !=="" ? true : false
 
   console.log("body", req.body)
   
@@ -537,12 +537,12 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : fal
           payment_method_types: [paymentOption],
 
             // ✅ PLATFORM FEE (your 10%)
-          application_fee_amount: Math.round((amount * 0.10) + (amount * coachFees)),
+          //application_fee_amount: Math.round((amount * 0.10) + (amount * coachFees)),
 
           // ✅ SEND REMAINDER TO COACH
-          transfer_data: {
-            destination: coachStripeAccountId,
-          },
+          //transfer_data: {
+          //  destination: coachStripeAccountId,
+          //},
 
           //payment_method: paymentMethods.id,
           metadata: { 
@@ -558,7 +558,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : fal
                 endTime: endTime,
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
-                creatorCutCents: creatorCutCents
+                creatorCutCents: validCreatorAccount ? creatorCutCents : ""
 
             }
       });
@@ -627,7 +627,7 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || "" ? true : fal
                 endTime: endTime,
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
-                creatorCutCents: creatorCutCents
+                creatorCutCents: creatorCutCents ? creatorCutCents : ""
 
             }
       });
