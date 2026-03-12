@@ -55,8 +55,78 @@ app.post(
     if (event.type === "payment_intent.succeeded") {
 
 
-      const paymentIntent = event.data.object;
-        const metadata = paymentIntent.metadata;
+
+    const paymentIntent = event.data.object;
+
+    const metadata = paymentIntent.metadata;
+
+
+      // 1. Only run this for PayPal payments
+    if (paymentIntent.payment_method_types.includes('paypal')) {
+            
+      const { coachStripeAccountId, coachId } = paymentIntent.metadata;
+      const totalAmount = paymentIntent.amount;
+      
+      if (!metadata.creatorAccountId || metadata.creatorAccountId == "none") {
+      // 2. Extract the metadata you sent during the creation
+      
+      // 3. Calculate the Coach's Cut 
+      // Example: If you keep 10%, the coach gets 90%
+      const coachAmount = Math.round(totalAmount * 0.90); 
+
+
+      try {
+        // 4. Manually transfer the funds to the coach
+        const transfer = await stripe.transfers.create({
+          amount: coachAmount,
+          currency: 'eur',
+          destination: coachStripeAccountId,
+          transfer_group: paymentIntent.id, // Links the transfer to the original charge
+          // metadata: {
+          //   order_id: paymentIntent.metadata.orderId // Good for tracking
+          // }
+        });
+
+        console.log(`Successfully transferred ${coachAmount} to coach ${coachStripeAccountId}`);
+      } catch (err) {
+        console.error("Transfer failed:", err.message);
+        // You might want to log this in Xano or an error table for manual retry
+      }
+
+
+
+    } else if (metadata.creatorAccountId && metadata.creatorAccountId !== "none") {
+            const creatorCut = parseInt(metadata.creatorCutCents)
+            const coachAmount = Math.round((totalAmount * 0.90) - creatorCut); 
+
+            try {
+                const coachTransfer = await stripe.transfers.create({
+                    amount: coachAmount, 
+                    currency: 'eur',
+                    destination: coachStripeAccountId,
+                    description: `Creator commission for ${metadata.productName}`,
+                    transfer_group: paymentIntent.transfer_group 
+                });
+
+
+                const creatorTransfer = await stripe.transfers.create({
+                    amount: parseInt(metadata.creatorCutCents), 
+                    currency: 'eur',
+                    destination: metadata.creatorAccountId,
+                    description: `Creator commission for ${metadata.productName}`,
+                    transfer_group: paymentIntent.transfer_group 
+                });
+
+                console.log(`✅ Creator Payout Successful: ${creatorTransfer.id}`);
+                console.log(`✅ Coach Payout Successful: ${coachTransfer.id}`);
+            } catch (transferError) {
+                console.error("❌ Creator Payout Failed:", transferError.message);
+            }
+        }
+
+
+
+    } else {
 
         if (metadata.creatorAccountId && metadata.creatorAccountId !== "none") {
             try {
@@ -73,6 +143,9 @@ app.post(
                 console.error("❌ Creator Payout Failed:", transferError.message);
             }
         }
+
+
+      }
 
 
 
@@ -152,7 +225,9 @@ app.post(
           startDateTime: startTime,
           endDateTime: endTime,
           concluded: false,
-          bundle_index: 1
+          bundle_index: 1,
+          userId: userId,
+          coachId: coachId
           }, {
           headers: {
           "Content-Type": "application/json",
@@ -595,7 +670,9 @@ const validCreatorAccount = creatorStripeAccountId !== "null" || creatorStripeAc
                 username: username,
                 creatorAccountId: validCreatorAccount ? creatorStripeAccountId : "none",
                 creatorCutCents: validCreatorAccount ? creatorCutCents : "",
-                bundle: bundle
+                bundle: bundle,
+                coachAmount: Math.round(amount - ((amount * 0.10) + (amount * coachFees)))
+                
 
             }
       });
