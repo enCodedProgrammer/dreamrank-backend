@@ -252,8 +252,6 @@ app.post(
         }
 
         
-
-        // 4. Send success back to Wized
         res.json({ 
             success: true, 
             message: "Payment record updated successfully",
